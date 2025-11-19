@@ -278,8 +278,11 @@ const WarningDetailScreen = ({ route, navigation }) => {
         ))}
       </View>
 
-      {/* Report Button */}
-      <TouchableOpacity style={styles.reportButton}>
+      {/* Report Button - NOW WITH NAVIGATION */}
+      <TouchableOpacity 
+        style={styles.reportButton}
+        onPress={() => navigation.navigate('AddWarning')}
+      >
         <Text style={styles.reportButtonText}>🚨 Report Similar Scam</Text>
       </TouchableOpacity>
 

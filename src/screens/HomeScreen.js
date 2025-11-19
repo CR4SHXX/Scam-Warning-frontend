@@ -54,19 +54,28 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       
-     {/* HEADER */}
-<View style={styles.header}>
-  <Text style={styles.title}>Latest Scam Warnings</Text>
-  <Text style={styles.subtitle}>Stay safe from scams</Text>
-  
-  {/* View All Button */}
-  <TouchableOpacity 
-    style={styles.viewAllButton}
-    onPress={() => navigation.navigate('AllWarnings')}
-  >
-    <Text style={styles.viewAllText}>View All Warnings →</Text>
-  </TouchableOpacity>
-</View>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Latest Scam Warnings</Text>
+        <Text style={styles.subtitle}>Stay safe from scams</Text>
+        
+        {/* Header Buttons Row */}
+        <View style={styles.headerButtonsRow}>
+          <TouchableOpacity 
+            style={styles.viewAllButton}
+            onPress={() => navigation.navigate('AllWarnings')}
+          >
+            <Text style={styles.viewAllText}>View All →</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.addWarningButton}
+            onPress={() => navigation.navigate('AddWarning')}
+          >
+            <Text style={styles.addWarningText}>⚠️ Report Scam</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       
       {/* WARNINGS LIST */}
       <FlatList
@@ -122,6 +131,41 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
+  },
+  
+  // HEADER BUTTONS ROW
+  headerButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 15,
+  },
+  viewAllButton: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  viewAllText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addWarningButton: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addWarningText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   
   // LIST STYLES
