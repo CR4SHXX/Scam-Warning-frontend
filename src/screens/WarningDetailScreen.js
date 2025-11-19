@@ -1,15 +1,24 @@
 // src/screens/WarningDetailScreen.js
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from 'react-native';
 
 const WarningDetailScreen = ({ route, navigation }) => {
   const { warningId } = route.params;
+  
+  // State for comment form
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [username, setUsername] = useState('');
 
   // Fake data - find warning by ID
   const allWarnings = [
@@ -240,6 +249,58 @@ const WarningDetailScreen = ({ route, navigation }) => {
     }
   ];
 
+  // Handle comment submission
+  const handleSubmitComment = () => {
+    // Validation
+    if (!username.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+    if (!commentText.trim()) {
+      Alert.alert('Error', 'Please enter a comment');
+      return;
+    }
+
+    // Prepare comment data for API
+    const commentData = {
+      warningId: warningId,
+      username: username.trim(),
+      comment: commentText.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('=== NEW COMMENT SUBMISSION ===');
+    console.log('Warning ID:', commentData.warningId);
+    console.log('Username:', commentData.username);
+    console.log('Comment:', commentData.comment);
+    console.log('Timestamp:', commentData.timestamp);
+    console.log('==============================');
+
+    // Show success message
+    Alert.alert(
+      'Success!',
+      'Your comment has been submitted (API connection in Phase 3)',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Clear form and hide it
+            setCommentText('');
+            setUsername('');
+            setShowCommentForm(false);
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle cancel
+  const handleCancelComment = () => {
+    setCommentText('');
+    setUsername('');
+    setShowCommentForm(false);
+  };
+
   if (!warning) {
     return (
       <View style={styles.container}>
@@ -249,65 +310,125 @@ const WarningDetailScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Category Badge */}
-      <View style={styles.categoryBadge}>
-        <Text style={styles.categoryText}>{warning.category}</Text>
-      </View>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView style={styles.container}>
+        {/* Category Badge */}
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryText}>{warning.category}</Text>
+        </View>
 
-      {/* Title */}
-      <Text style={styles.title}>{warning.title}</Text>
+        {/* Title */}
+        <Text style={styles.title}>{warning.title}</Text>
 
-      {/* Date */}
-      <Text style={styles.date}>Posted on {warning.datePosted}</Text>
+        {/* Date */}
+        <Text style={styles.date}>Posted on {warning.datePosted}</Text>
 
-      {/* Description Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Description</Text>
-        <Text style={styles.description}>{warning.description}</Text>
-      </View>
+        {/* Description Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.description}>{warning.description}</Text>
+        </View>
 
-      {/* Warning Signs Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Warning Signs</Text>
-        {warning.warningSigns.map((sign, index) => (
-          <View key={index} style={styles.warningSignItem}>
-            <Text style={styles.bullet}>⚠️</Text>
-            <Text style={styles.warningSignText}>{sign}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Report Button - NOW WITH NAVIGATION */}
-      <TouchableOpacity 
-        style={styles.reportButton}
-        onPress={() => navigation.navigate('AddWarning')}
-      >
-        <Text style={styles.reportButtonText}>🚨 Report Similar Scam</Text>
-      </TouchableOpacity>
-
-      {/* Comments Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Community Comments ({comments.length})</Text>
-        {comments.map((comment) => (
-          <View key={comment.id} style={styles.commentItem}>
-            <View style={styles.commentHeader}>
-              <Text style={styles.commentUsername}>{comment.username}</Text>
-              <Text style={styles.commentTimestamp}>{comment.timestamp}</Text>
+        {/* Warning Signs Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Warning Signs</Text>
+          {warning.warningSigns.map((sign, index) => (
+            <View key={index} style={styles.warningSignItem}>
+              <Text style={styles.bullet}>⚠️</Text>
+              <Text style={styles.warningSignText}>{sign}</Text>
             </View>
-            <Text style={styles.commentText}>{comment.comment}</Text>
+          ))}
+        </View>
+
+        {/* Report Button */}
+        <TouchableOpacity 
+          style={styles.reportButton}
+          onPress={() => navigation.navigate('AddWarning')}
+        >
+          <Text style={styles.reportButtonText}>🚨 Report Similar Scam</Text>
+        </TouchableOpacity>
+
+        {/* Comments Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Community Comments ({comments.length})</Text>
+          {comments.map((comment) => (
+            <View key={comment.id} style={styles.commentItem}>
+              <View style={styles.commentHeader}>
+                <Text style={styles.commentUsername}>{comment.username}</Text>
+                <Text style={styles.commentTimestamp}>{comment.timestamp}</Text>
+              </View>
+              <Text style={styles.commentText}>{comment.comment}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Add Comment Button - Toggle Form */}
+        {!showCommentForm ? (
+          <TouchableOpacity 
+            style={styles.addCommentButton}
+            onPress={() => setShowCommentForm(true)}
+          >
+            <Text style={styles.addCommentButtonText}>💬 Add Your Comment</Text>
+          </TouchableOpacity>
+        ) : (
+          /* Comment Form */
+          <View style={styles.commentFormContainer}>
+            <Text style={styles.formTitle}>Add Your Comment</Text>
+            
+            {/* Username Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Your Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                value={username}
+                onChangeText={setUsername}
+                maxLength={50}
+              />
+            </View>
+
+            {/* Comment Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Your Comment *</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Share your experience or thoughts about this scam..."
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                maxLength={500}
+              />
+              <Text style={styles.charCount}>{commentText.length}/500</Text>
+            </View>
+
+            {/* Form Buttons */}
+            <View style={styles.formButtonsContainer}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={handleCancelComment}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.submitButton}
+                onPress={handleSubmitComment}
+              >
+                <Text style={styles.submitButtonText}>Post Comment</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        ))}
-      </View>
+        )}
 
-      {/* Add Comment Button */}
-      <TouchableOpacity style={styles.addCommentButton}>
-        <Text style={styles.addCommentButtonText}>💬 Add Your Comment</Text>
-      </TouchableOpacity>
-
-      {/* Bottom Spacing */}
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        {/* Bottom Spacing */}
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -435,6 +556,82 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   addCommentButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // COMMENT FORM STYLES
+  commentFormContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 12,
+  },
+  charCount: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  formButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  submitButton: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  submitButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
