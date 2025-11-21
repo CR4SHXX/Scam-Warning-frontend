@@ -1,5 +1,5 @@
 // src/screens/WarningDetailScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,247 +10,58 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { warningsAPI, commentsAPI } from '../services/api';
 
 const WarningDetailScreen = ({ route, navigation }) => {
   const { warningId } = route.params;
+  
+  // State for API data
+  const [warning, setWarning] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   
   // State for comment form
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [username, setUsername] = useState('');
 
-  // Fake data - find warning by ID
-  const allWarnings = [
-    {
-      id: 1,
-      title: "Phone Call Scam Alert",
-      description: "Beware of calls claiming to be from tax authorities demanding immediate payment. These scammers use pressure tactics and threats of legal action to frighten victims into sending money quickly.",
-      category: "Phone",
-      warningSigns: [
-        "Caller demands immediate payment",
-        "Threats of arrest or legal action",
-        "Request for gift cards or wire transfers",
-        "Caller ID may be spoofed to look official"
-      ],
-      datePosted: "2024-01-15"
-    },
-    {
-      id: 2,
-      title: "Fake Investment Opportunity",
-      description: "Fraudulent investment schemes promising guaranteed high returns with little to no risk. Scammers often create fake websites and documentation to appear legitimate.",
-      category: "Investment",
-      warningSigns: [
-        "Promises of unusually high returns",
-        "Pressure to invest immediately",
-        "Unregistered investments",
-        "Complex strategies that are hard to understand"
-      ],
-      datePosted: "2024-01-14"
-    },
-    {
-      id: 3,
-      title: "Email Phishing Campaign",
-      description: "Fake emails claiming to be from well-known companies asking you to verify your account information or reset your password. Links lead to fake websites designed to steal your credentials.",
-      category: "Email",
-      warningSigns: [
-        "Generic greetings instead of your name",
-        "Spelling and grammar errors",
-        "Suspicious links or attachments",
-        "Urgent requests for personal information"
-      ],
-      datePosted: "2024-01-13"
-    },
-    {
-      id: 4,
-      title: "Online Shopping Fraud",
-      description: "Fake e-commerce websites selling products at incredibly low prices. After payment, goods never arrive or are counterfeit.",
-      category: "Online",
-      warningSigns: [
-        "Prices too good to be true",
-        "No contact information or customer reviews",
-        "Poor website design with broken links",
-        "Only accepts wire transfers or cryptocurrency"
-      ],
-      datePosted: "2024-01-12"
-    },
-    {
-      id: 5,
-      title: "Romance Scam Warning",
-      description: "Scammers create fake profiles on dating sites and social media, build romantic relationships, then ask for money for emergencies or travel expenses.",
-      category: "Social Media",
-      warningSigns: [
-        "Professes love very quickly",
-        "Never wants to meet in person or video chat",
-        "Always has an emergency requiring money",
-        "Asks you to communicate off the platform"
-      ],
-      datePosted: "2024-01-11"
-    },
-    {
-      id: 6,
-      title: "Tech Support Scam",
-      description: "Fake tech support calls or pop-ups claiming your computer has a virus. They request remote access to your device and charge for unnecessary services.",
-      category: "Phone",
-      warningSigns: [
-        "Unsolicited calls about computer problems",
-        "Pop-ups that won't close warning of viruses",
-        "Request for remote access to your device",
-        "Demand payment for unnecessary services"
-      ],
-      datePosted: "2024-01-10"
-    },
-    {
-      id: 7,
-      title: "Lottery/Prize Scam",
-      description: "Notifications claiming you've won a lottery or prize you never entered. Scammers ask for payment of taxes or fees before releasing the prize.",
-      category: "Email",
-      warningSigns: [
-        "Winning a contest you never entered",
-        "Request to pay fees or taxes upfront",
-        "Pressure to act quickly",
-        "Poor grammar in official communications"
-      ],
-      datePosted: "2024-01-09"
-    },
-    {
-      id: 8,
-      title: "Job Offer Scam",
-      description: "Fake job postings offering high salaries for minimal work. Scammers may ask for personal information, upfront fees, or use you for money laundering.",
-      category: "Online",
-      warningSigns: [
-        "Job offer without an interview",
-        "Salary too high for the position",
-        "Request for personal banking information",
-        "Asked to pay for training or equipment"
-      ],
-      datePosted: "2024-01-08"
-    },
-    {
-      id: 9,
-      title: "Rental Property Scam",
-      description: "Fraudulent rental listings with photos stolen from legitimate sites. Scammers collect deposits and disappear, or the property doesn't exist.",
-      category: "Online",
-      warningSigns: [
-        "Owner refuses to meet in person",
-        "Pressure to send deposit immediately",
-        "Price significantly below market rate",
-        "Owner claims to be out of the country"
-      ],
-      datePosted: "2024-01-07"
-    },
-    {
-      id: 10,
-      title: "Charity Scam Alert",
-      description: "Fake charities that exploit generosity, especially after natural disasters. They collect donations but never help the intended beneficiaries.",
-      category: "Phone",
-      warningSigns: [
-        "Pressure to donate immediately",
-        "Vague description of how funds will be used",
-        "Unwilling to provide documentation",
-        "Thanks you for previous donation you never made"
-      ],
-      datePosted: "2024-01-06"
-    },
-    {
-      id: 11,
-      title: "Credit Card Skimming",
-      description: "Devices installed on ATMs or payment terminals to steal card information. Thieves use this data to make unauthorized purchases or create counterfeit cards.",
-      category: "Other",
-      warningSigns: [
-        "Card reader looks bulky or misaligned",
-        "Unusual cameras near PIN pad",
-        "Loose or damaged parts on ATM",
-        "Keyboard feels different or doesn't sit flush"
-      ],
-      datePosted: "2024-01-05"
-    },
-    {
-      id: 12,
-      title: "Grandparent Scam",
-      description: "Scammers call elderly people pretending to be a grandchild in trouble, requesting urgent money for bail, hospital bills, or other emergencies.",
-      category: "Phone",
-      warningSigns: [
-        "Caller claims to be relative in trouble",
-        "Asks you to keep the call secret",
-        "Demands immediate wire transfer",
-        "Voice doesn't quite sound like grandchild"
-      ],
-      datePosted: "2024-01-04"
-    },
-    {
-      id: 13,
-      title: "Social Media Impersonation",
-      description: "Scammers create fake accounts impersonating friends or celebrities to request money or personal information.",
-      category: "Social Media",
-      warningSigns: [
-        "New account from someone you're already friends with",
-        "Poor quality profile photo",
-        "Immediate requests for money or info",
-        "Generic messages not matching their style"
-      ],
-      datePosted: "2024-01-03"
-    },
-    {
-      id: 14,
-      title: "IRS/Tax Authority Scam",
-      description: "Fake calls or emails from tax authorities claiming you owe money and threatening arrest or legal action if you don't pay immediately.",
-      category: "Email",
-      warningSigns: [
-        "Threatening immediate arrest",
-        "Demanding specific payment methods",
-        "No opportunity to question or appeal",
-        "Call from unexpected number"
-      ],
-      datePosted: "2024-01-02"
-    },
-    {
-      id: 15,
-      title: "Cryptocurrency Scam",
-      description: "Fraudulent cryptocurrency investment platforms or fake celebrity endorsements promising guaranteed profits. Once you invest, your money disappears.",
-      category: "Investment",
-      warningSigns: [
-        "Guaranteed returns with no risk",
-        "Celebrity endorsements that seem suspicious",
-        "Pressure to recruit others",
-        "Complex explanation of how profits are generated"
-      ],
-      datePosted: "2024-01-01"
-    }
-  ];
+  // Fetch data on mount
+  useEffect(() => {
+    fetchWarningAndComments();
+  }, []);
 
-  const warning = allWarnings.find(w => w.id === warningId);
-
-  // Fake comments data
-  const comments = [
-    {
-      id: 1,
-      username: "Sarah M.",
-      comment: "Thank you for posting this! I almost fell for a similar scam last week. Stay vigilant everyone!",
-      timestamp: "2 hours ago"
-    },
-    {
-      id: 2,
-      username: "John D.",
-      comment: "My elderly mother received this exact call. Fortunately, I was there to stop her from sending money. Please share this with older family members.",
-      timestamp: "5 hours ago"
-    },
-    {
-      id: 3,
-      username: "Lisa K.",
-      comment: "Great information. I've reported similar activity to local authorities. Everyone should be aware of these tactics.",
-      timestamp: "1 day ago"
-    },
-    {
-      id: 4,
-      username: "Mike R.",
-      comment: "This happened to my neighbor last month. They lost over $5,000. Thank you for spreading awareness!",
-      timestamp: "2 days ago"
+  // Fetch warning and comments from API
+  const fetchWarningAndComments = async () => {
+    setLoading(true);
+    setError(null);
+    
+    // Fetch warning details
+    const warningResult = await warningsAPI.getById(warningId);
+    
+    if (warningResult.success) {
+      setWarning(warningResult.data);
+    } else {
+      setError(warningResult.error);
+      setLoading(false);
+      return;
     }
-  ];
+    
+    // Fetch comments
+    const commentsResult = await commentsAPI.getByWarningId(warningId);
+    
+    if (commentsResult.success) {
+      setComments(commentsResult.data);
+    }
+    
+    setLoading(false);
+  };
 
   // Handle comment submission
-  const handleSubmitComment = () => {
+  const handleSubmitComment = async () => {
     // Validation
     if (!username.trim()) {
       Alert.alert('Error', 'Please enter your name');
@@ -261,37 +72,33 @@ const WarningDetailScreen = ({ route, navigation }) => {
       return;
     }
 
-    // Prepare comment data for API
-    const commentData = {
-      warningId: warningId,
-      username: username.trim(),
-      comment: commentText.trim(),
-      timestamp: new Date().toISOString(),
-    };
-
-    console.log('=== NEW COMMENT SUBMISSION ===');
-    console.log('Warning ID:', commentData.warningId);
-    console.log('Username:', commentData.username);
-    console.log('Comment:', commentData.comment);
-    console.log('Timestamp:', commentData.timestamp);
-    console.log('==============================');
-
-    // Show success message
-    Alert.alert(
-      'Success!',
-      'Your comment has been submitted (API connection in Phase 3)',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Clear form and hide it
-            setCommentText('');
-            setUsername('');
-            setShowCommentForm(false);
+    setSubmitting(true);
+    
+    const result = await commentsAPI.add(warningId, commentText.trim());
+    
+    setSubmitting(false);
+    
+    if (result.success) {
+      Alert.alert(
+        'Success!',
+        'Your comment has been submitted successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Clear form and hide it
+              setCommentText('');
+              setUsername('');
+              setShowCommentForm(false);
+              // Refresh data
+              fetchWarningAndComments();
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+      Alert.alert('Submission Failed', result.error);
+    }
   };
 
   // Handle cancel
@@ -301,10 +108,21 @@ const WarningDetailScreen = ({ route, navigation }) => {
     setShowCommentForm(false);
   };
 
-  if (!warning) {
+  // Loading state
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Warning not found</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading warning details...</Text>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error || !warning) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>❌ {error || 'Warning not found'}</Text>
       </View>
     );
   }
@@ -333,15 +151,17 @@ const WarningDetailScreen = ({ route, navigation }) => {
         </View>
 
         {/* Warning Signs Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Warning Signs</Text>
-          {warning.warningSigns.map((sign, index) => (
-            <View key={index} style={styles.warningSignItem}>
-              <Text style={styles.bullet}>⚠️</Text>
-              <Text style={styles.warningSignText}>{sign}</Text>
-            </View>
-          ))}
-        </View>
+        {warning.warningSigns && warning.warningSigns.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Warning Signs</Text>
+            {warning.warningSigns.map((sign, index) => (
+              <View key={index} style={styles.warningSignItem}>
+                <Text style={styles.bullet}>⚠️</Text>
+                <Text style={styles.warningSignText}>{sign}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Report Button */}
         <TouchableOpacity 
@@ -387,6 +207,7 @@ const WarningDetailScreen = ({ route, navigation }) => {
                 value={username}
                 onChangeText={setUsername}
                 maxLength={50}
+                editable={!submitting}
               />
             </View>
 
@@ -402,6 +223,7 @@ const WarningDetailScreen = ({ route, navigation }) => {
                 numberOfLines={4}
                 textAlignVertical="top"
                 maxLength={500}
+                editable={!submitting}
               />
               <Text style={styles.charCount}>{commentText.length}/500</Text>
             </View>
@@ -411,15 +233,21 @@ const WarningDetailScreen = ({ route, navigation }) => {
               <TouchableOpacity 
                 style={styles.cancelButton}
                 onPress={handleCancelComment}
+                disabled={submitting}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={styles.submitButton}
+                style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
                 onPress={handleSubmitComment}
+                disabled={submitting}
               >
-                <Text style={styles.submitButtonText}>Post Comment</Text>
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Post Comment</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -637,10 +465,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   errorText: {
-    fontSize: 18,
-    color: '#666',
+    fontSize: 16,
+    color: '#FF3B30',
     textAlign: 'center',
-    marginTop: 50,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
 

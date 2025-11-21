@@ -1,42 +1,36 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import WarningCard from '../components/WarningCard';
+import { warningsAPI } from '../services/api';
 
 export default function HomeScreen({ navigation }) {
   
-  // 📋 FAKE DATA - 5 warnings
-  const warnings = [
-    {
-      id: 1,
-      title: "Phone Call Scam Alert",
-      description: "Beware of calls claiming to be from tax authorities demanding immediate payment.",
-      category: "Phone"
-    },
-    {
-      id: 2,
-      title: "Email Phishing Attack",
-      description: "Fake emails pretending to be from banks asking for password verification.",
-      category: "Email"
-    },
-    {
-      id: 3,
-      title: "SMS Fraud Warning",
-      description: "Suspicious text messages with links claiming you won a prize or package delivery.",
-      category: "SMS"
-    },
-    {
-      id: 4,
-      title: "Bank Account Scam",
-      description: "Scammers calling pretending to be bank security asking for card details.",
-      category: "Banking"
-    },
-    {
-      id: 5,
-      title: "Social Media Impersonation",
-      description: "Fake profiles impersonating friends or family asking for money urgently.",
-      category: "Social Media"
+  // State for API data
+  const [warnings, setWarnings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch warnings on mount
+  useEffect(() => {
+    fetchWarnings();
+  }, []);
+
+  // Fetch warnings from API
+  const fetchWarnings = async () => {
+    setLoading(true);
+    setError(null);
+    
+    const result = await warningsAPI.getAll();
+    
+    if (result.success) {
+      // Limit to first 5 warnings for home screen
+      setWarnings(result.data.slice(0, 5));
+    } else {
+      setError(result.error);
     }
-  ];
+    
+    setLoading(false);
+  };
 
   // 🎯 Handle card press
   const handleWarningPress = (warningId) => {
@@ -77,14 +71,37 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
       
+      {/* LOADING STATE */}
+      {loading && (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading warnings...</Text>
+        </View>
+      )}
+      
+      {/* ERROR STATE */}
+      {error && !loading && (
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>❌ {error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={fetchWarnings}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       {/* WARNINGS LIST */}
-      <FlatList
-        data={warnings}
-        renderItem={renderWarningItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {!loading && !error && (
+        <FlatList
+          data={warnings}
+          renderItem={renderWarningItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
       
       {/* BOTTOM BUTTONS */}
       <View style={styles.buttonContainer}>
@@ -208,5 +225,35 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  
+  // LOADING AND ERROR STYLES
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

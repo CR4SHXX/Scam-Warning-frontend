@@ -9,10 +9,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { authAPI } from '../services/api';
 
 const AuthScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -23,26 +27,82 @@ const AuthScreen = ({ navigation }) => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
 
-  const handleLogin = () => {
-    console.log('=== LOGIN ATTEMPT ===');
-    console.log('Email:', loginEmail);
-    console.log('Password:', loginPassword);
-    console.log('====================');
+  const handleLogin = async () => {
+    // Validation
+    if (!loginEmail.trim()) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
+    }
+    if (!loginPassword.trim()) {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+
+    setLoading(true);
     
-    // TODO: API call will go here in Phase 3
-    // For now, just show alert
-    alert('Login functionality will be connected in Phase 3');
+    const result = await authAPI.login(loginEmail.trim(), loginPassword);
+    
+    setLoading(false);
+    
+    if (result.success) {
+      Alert.alert(
+        'Success!',
+        'You have logged in successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Home')
+          }
+        ]
+      );
+    } else {
+      Alert.alert('Login Failed', result.error);
+    }
   };
 
-  const handleRegister = () => {
-    console.log('=== REGISTER ATTEMPT ===');
-    console.log('Username:', registerUsername);
-    console.log('Email:', registerEmail);
-    console.log('Password:', registerPassword);
-    console.log('========================');
+  const handleRegister = async () => {
+    // Validation
+    if (!registerUsername.trim()) {
+      Alert.alert('Error', 'Please enter a username');
+      return;
+    }
+    if (!registerEmail.trim()) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
+    }
+    if (!registerPassword.trim()) {
+      Alert.alert('Error', 'Please enter a password');
+      return;
+    }
+    if (registerPassword.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
+      return;
+    }
+
+    setLoading(true);
     
-    // TODO: API call will go here in Phase 3
-    alert('Registration functionality will be connected in Phase 3');
+    const result = await authAPI.register(
+      registerUsername.trim(),
+      registerEmail.trim(),
+      registerPassword
+    );
+    
+    setLoading(false);
+    
+    if (result.success) {
+      Alert.alert(
+        'Success!',
+        'Your account has been created successfully. Please login.',
+        [
+          {
+            text: 'OK',
+            onPress: () => setIsLogin(true)
+          }
+        ]
+      );
+    } else {
+      Alert.alert('Registration Failed', result.error);
+    }
   };
 
   return (
@@ -92,6 +152,7 @@ const AuthScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
             <Text style={styles.label}>Password</Text>
@@ -103,22 +164,28 @@ const AuthScreen = ({ navigation }) => {
               secureTextEntry
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity style={styles.forgotPassword} disabled={loading}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.submitButton}
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleLogin}
+              disabled={loading}
             >
-              <Text style={styles.submitButtonText}>Login</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.switchContainer}>
               <Text style={styles.switchText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => setIsLogin(false)}>
+              <TouchableOpacity onPress={() => setIsLogin(false)} disabled={loading}>
                 <Text style={styles.switchLink}>Register here</Text>
               </TouchableOpacity>
             </View>
@@ -134,6 +201,7 @@ const AuthScreen = ({ navigation }) => {
               onChangeText={setRegisterUsername}
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
             <Text style={styles.label}>Email Address</Text>
@@ -145,6 +213,7 @@ const AuthScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
             <Text style={styles.label}>Password</Text>
@@ -156,6 +225,7 @@ const AuthScreen = ({ navigation }) => {
               secureTextEntry
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
             <View style={styles.passwordHint}>
@@ -168,15 +238,20 @@ const AuthScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity 
-              style={styles.submitButton}
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleRegister}
+              disabled={loading}
             >
-              <Text style={styles.submitButtonText}>Create Account</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Create Account</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.switchContainer}>
               <Text style={styles.switchText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => setIsLogin(true)}>
+              <TouchableOpacity onPress={() => setIsLogin(true)} disabled={loading}>
                 <Text style={styles.switchLink}>Login here</Text>
               </TouchableOpacity>
             </View>
@@ -302,6 +377,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   switchContainer: {
     flexDirection: 'row',
