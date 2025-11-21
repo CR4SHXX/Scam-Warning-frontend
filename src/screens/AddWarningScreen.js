@@ -1,5 +1,5 @@
 // src/screens/AddWarningScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,17 +10,49 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { warningsAPI, categoriesAPI } from '../services/api';
 
 const AddWarningScreen = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [warningSigns, setWarningSigns] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const categories = ['Phone', 'Email', 'Online', 'Investment', 'Social Media', 'Other'];
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const handleSubmit = () => {
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    
+    const result = await categoriesAPI.getAll();
+    
+    if (result.success) {
+      setCategories(result.data);
+    } else {
+      Alert.alert('Error', 'Failed to load categories: ' + result.error);
+      // Fallback categories
+      setCategories([
+        { id: 1, name: 'Phone' },
+        { id: 2, name: 'Email' },
+        { id: 3, name: 'Online' },
+        { id: 4, name: 'Investment' },
+        { id: 5, name: 'Social Media' },
+        { id: 6, name: 'Other' },
+      ]);
+    }
+    
+    setLoadingCategories(false);
+  };
+
+  const handleSubmit = async () => {
     // Basic validation
     if (!title.trim()) {
       Alert.alert('Error', 'Please enter a title');
@@ -41,43 +73,40 @@ const AddWarningScreen = ({ navigation }) => {
       .map(sign => sign.trim())
       .filter(sign => sign.length > 0);
 
-    // Prepare data object
-    const warningData = {
-      title: title.trim(),
-      description: description.trim(),
-      category: selectedCategory,
-      warningSigns: warningSignsArray,
-      datePosted: new Date().toISOString().split('T')[0], // Current date
-    };
-
-    console.log('=== NEW WARNING SUBMISSION ===');
-    console.log('Title:', warningData.title);
-    console.log('Description:', warningData.description);
-    console.log('Category:', warningData.category);
-    console.log('Warning Signs:', warningData.warningSigns);
-    console.log('Date:', warningData.datePosted);
-    console.log('==============================');
-
-    // Show success message
-    Alert.alert(
-      'Success!',
-      'Your warning has been submitted (API connection in Phase 3)',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Clear form
-            setTitle('');
-            setDescription('');
-            setWarningSigns('');
-            setSelectedCategory('');
-            
-            // Navigate back to home
-            navigation.navigate('Home');
-          }
-        }
-      ]
+    setLoading(true);
+    
+    const result = await warningsAPI.create(
+      title.trim(),
+      description.trim(),
+      selectedCategory,
+      warningSignsArray
     );
+    
+    setLoading(false);
+    
+    if (result.success) {
+      Alert.alert(
+        'Success!',
+        'Your warning has been submitted successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Clear form
+              setTitle('');
+              setDescription('');
+              setWarningSigns('');
+              setSelectedCategory(null);
+              
+              // Navigate back to home
+              navigation.navigate('Home');
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert('Submission Failed', result.error);
+    }
   };
 
   const handleCancel = () => {
@@ -94,6 +123,16 @@ const AddWarningScreen = ({ navigation }) => {
       ]
     );
   };
+
+  // Show loading screen while categories are being fetched
+  if (loadingCategories) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading categories...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView 
@@ -121,6 +160,7 @@ const AddWarningScreen = ({ navigation }) => {
               value={title}
               onChangeText={setTitle}
               maxLength={100}
+              editable={!loading}
             />
             <Text style={styles.charCount}>{title.length}/100</Text>
           </View>
@@ -137,6 +177,7 @@ const AddWarningScreen = ({ navigation }) => {
               numberOfLines={6}
               textAlignVertical="top"
               maxLength={500}
+              editable={!loading}
             />
             <Text style={styles.charCount}>{description.length}/500</Text>
           </View>
@@ -147,20 +188,21 @@ const AddWarningScreen = ({ navigation }) => {
             <View style={styles.categoryContainer}>
               {categories.map((category) => (
                 <TouchableOpacity
-                  key={category}
+                  key={category.id}
                   style={[
                     styles.categoryButton,
-                    selectedCategory === category && styles.categoryButtonActive
+                    selectedCategory === category.id && styles.categoryButtonActive
                   ]}
-                  onPress={() => setSelectedCategory(category)}
+                  onPress={() => setSelectedCategory(category.id)}
+                  disabled={loading}
                 >
                   <Text
                     style={[
                       styles.categoryButtonText,
-                      selectedCategory === category && styles.categoryButtonTextActive
+                      selectedCategory === category.id && styles.categoryButtonTextActive
                     ]}
                   >
-                    {category}
+                    {category.name}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -182,6 +224,7 @@ const AddWarningScreen = ({ navigation }) => {
               numberOfLines={5}
               textAlignVertical="top"
               maxLength={300}
+              editable={!loading}
             />
             <Text style={styles.charCount}>{warningSigns.length}/300</Text>
           </View>
@@ -199,15 +242,21 @@ const AddWarningScreen = ({ navigation }) => {
             <TouchableOpacity 
               style={styles.cancelButton}
               onPress={handleCancel}
+              disabled={loading}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.submitButton}
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
+              disabled={loading}
             >
-              <Text style={styles.submitButtonText}>Submit Warning</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Submit Warning</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -356,6 +405,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
