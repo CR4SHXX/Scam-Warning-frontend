@@ -13,8 +13,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { warningsAPI, categoriesAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const AddWarningScreen = ({ navigation }) => {
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [warningSigns, setWarningSigns] = useState('');
@@ -123,6 +125,35 @@ const AddWarningScreen = ({ navigation }) => {
       ]
     );
   };
+
+  // Show loading screen while checking auth status
+  if (authLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Show login required message if not authenticated
+  if (!isLoggedIn) {
+    return (
+      <View style={styles.authRequiredContainer}>
+        <Text style={styles.authRequiredIcon}>🔒</Text>
+        <Text style={styles.authRequiredTitle}>Login Required</Text>
+        <Text style={styles.authRequiredText}>
+          Please log in to report a scam
+        </Text>
+        <TouchableOpacity
+          style={styles.authRequiredButton}
+          onPress={() => navigation.navigate('Auth')}
+        >
+          <Text style={styles.authRequiredButtonText}>Go to Login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Show loading screen while categories are being fetched
   if (loadingCategories) {
@@ -419,6 +450,40 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  authRequiredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+  },
+  authRequiredIcon: {
+    fontSize: 60,
+    marginBottom: 20,
+  },
+  authRequiredTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  authRequiredText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  authRequiredButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  authRequiredButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

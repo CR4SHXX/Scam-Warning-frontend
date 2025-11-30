@@ -3,7 +3,11 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+// Configure the base URL based on your environment:
+// - Android Emulator: http://10.0.2.2:5000/api (10.0.2.2 maps to localhost on host machine)
+// - iOS Simulator: http://localhost:5000/api
+// - Physical Device: http://YOUR_IP:5000/api (replace YOUR_IP with your computer's local IP)
+const API_BASE_URL = 'http://10.0.2.2:5000/api';
 
 // Create axios instance
 const apiClient = axios.create({
@@ -45,7 +49,7 @@ export const authAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Registration failed',
+        error: error.response?.data?.error || error.message || 'Registration failed',
       };
     }
   },
@@ -67,7 +71,7 @@ export const authAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Login failed',
+        error: error.response?.data?.error || error.message || 'Login failed',
       };
     }
   },
@@ -106,7 +110,7 @@ export const warningsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to fetch warnings',
+        error: error.response?.data?.error || error.message || 'Failed to fetch warnings',
       };
     }
   },
@@ -119,7 +123,7 @@ export const warningsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to fetch warning',
+        error: error.response?.data?.error || error.message || 'Failed to fetch warning',
       };
     }
   },
@@ -136,7 +140,7 @@ export const warningsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to search warnings',
+        error: error.response?.data?.error || error.message || 'Failed to search warnings',
       };
     }
   },
@@ -154,7 +158,7 @@ export const warningsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to create warning',
+        error: error.response?.data?.error || error.message || 'Failed to create warning',
       };
     }
   },
@@ -170,7 +174,7 @@ export const categoriesAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to fetch categories',
+        error: error.response?.data?.error || error.message || 'Failed to fetch categories',
       };
     }
   },
@@ -186,7 +190,7 @@ export const commentsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to fetch comments',
+        error: error.response?.data?.error || error.message || 'Failed to fetch comments',
       };
     }
   },
@@ -201,7 +205,7 @@ export const commentsAPI = {
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to add comment',
+        error: error.response?.data?.error || error.message || 'Failed to add comment',
       };
     }
   },
