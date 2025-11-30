@@ -13,8 +13,10 @@ import {
   Alert,
 } from 'react-native';
 import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const AuthScreen = ({ navigation }) => {
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   
@@ -45,6 +47,13 @@ const AuthScreen = ({ navigation }) => {
     setLoading(false);
     
     if (result.success) {
+      // Update auth context state with token and user data
+      const userData = result.data.user ? {
+        username: result.data.user.username,
+        userId: result.data.user.id,
+      } : null;
+      await login(result.data.token, userData);
+      
       Alert.alert(
         'Success!',
         'You have logged in successfully',
@@ -231,9 +240,6 @@ const AuthScreen = ({ navigation }) => {
             <View style={styles.passwordHint}>
               <Text style={styles.passwordHintText}>
                 • Password must be at least 8 characters
-              </Text>
-              <Text style={styles.passwordHintText}>
-                • Include letters, numbers, and symbols
               </Text>
             </View>
 

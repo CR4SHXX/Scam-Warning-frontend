@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import WarningCard from '../components/WarningCard';
 import { warningsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function HomeScreen({ navigation }) {
+  const { isLoggedIn, logout } = useAuth();
   
   // State for API data
   const [warnings, setWarnings] = useState([]);
@@ -44,6 +46,25 @@ export default function HomeScreen({ navigation }) {
       onPress={() => handleWarningPress(item.id)}
     />
   );
+
+  // Handle logout
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            Alert.alert('Success', 'You have been logged out');
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -105,19 +126,30 @@ export default function HomeScreen({ navigation }) {
       
       {/* BOTTOM BUTTONS */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Auth')}
-        >
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.registerButton}
-          onPress={() => navigation.navigate('Auth')}
-        >
-          <Text style={styles.registerButtonText}>Register</Text>
-        </TouchableOpacity>
+        {isLoggedIn ? (
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Auth')}
+            >
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Auth')}
+            >
+              <Text style={styles.registerButtonText}>Register</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
       
     </View>
@@ -223,6 +255,18 @@ const styles = StyleSheet.create({
   },
   registerButtonText: {
     color: '#007AFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    flex: 1,
+    backgroundColor: '#FF3B30',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
