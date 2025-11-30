@@ -62,10 +62,8 @@ export const authAPI = {
         password,
       });
       
-      // Store token in AsyncStorage
-      if (response.data.token) {
-        await AsyncStorage.setItem('authToken', response.data.token);
-      }
+      // Note: Token storage is handled by AuthContext.login()
+      // to maintain a single source of truth for auth state
       
       return { success: true, data: response.data };
     } catch (error) {

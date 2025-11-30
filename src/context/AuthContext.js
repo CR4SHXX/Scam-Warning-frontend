@@ -25,7 +25,12 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         setIsLoggedIn(true);
         if (userData) {
-          setUser(JSON.parse(userData));
+          try {
+            setUser(JSON.parse(userData));
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+            setUser(null);
+          }
         }
       } else {
         setIsLoggedIn(false);
