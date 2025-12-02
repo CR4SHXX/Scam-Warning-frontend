@@ -1,12 +1,25 @@
 // src/config.js
-// CONFIGURATION - Update this based on your environment
+// CONFIGURATION - Automatically detects your computer's IP for physical devices
+
+import Constants from 'expo-constants';
+
+// Automatically get the API URL based on environment
+const getApiBaseUrl = () => {
+  // In development, use the Expo host IP (works automatically on physical devices)
+  if (__DEV__) {
+    const debuggerHost = Constants.expoConfig?.hostUri ?? Constants.manifest?.debuggerHost;
+    const localhost = debuggerHost?.split(':')[0];
+    if (localhost) {
+      return `http://${localhost}:5000/api`;
+    }
+  }
+  // Fallback for emulators or production
+  return 'http://10.0.2.2:5000/api';
+};
 
 export const CONFIG = {
-  // API Base URL Configuration:
-  // - Android Emulator: 'http://10.0.2.2:5000/api' (10.0.2.2 maps to localhost on host machine)
-  // - iOS Simulator: 'http://localhost:5000/api'
-  // - Physical Device: 'http://YOUR_IP:5000/api' (replace YOUR_IP with your computer's local IP)
-  API_BASE_URL: 'http://10.0.2.2:5000/api',
+  // API Base URL - automatically detected from Expo's dev server
+  API_BASE_URL: getApiBaseUrl(),
 
   // Request timeout in milliseconds
   API_TIMEOUT: 10000, // 10 seconds

@@ -44,7 +44,12 @@ const WarningDetailScreen = ({ route, navigation }) => {
     const warningResult = await warningsAPI.getById(warningId);
     
     if (warningResult.success) {
-      setWarning(warningResult.data);
+      // Transform warningSigns from string to array if needed
+      const warningData = warningResult.data;
+      if (warningData.warningSigns && typeof warningData.warningSigns === 'string') {
+        warningData.warningSigns = warningData.warningSigns.split(',').map(s => s.trim()).filter(s => s);
+      }
+      setWarning(warningData);
     } else {
       setError(warningResult.error);
       setLoading(false);
@@ -180,9 +185,9 @@ const WarningDetailScreen = ({ route, navigation }) => {
             <View key={comment.id} style={styles.commentItem}>
               <View style={styles.commentHeader}>
                 <Text style={styles.commentUsername}>{comment.username}</Text>
-                <Text style={styles.commentTimestamp}>{comment.timestamp}</Text>
+                <Text style={styles.commentTimestamp}>{new Date(comment.createdAt).toLocaleDateString()}</Text>
               </View>
-              <Text style={styles.commentText}>{comment.comment}</Text>
+              <Text style={styles.commentText}>{comment.text}</Text>
             </View>
           ))}
         </View>

@@ -19,6 +19,7 @@ const AddWarningScreen = ({ navigation }) => {
   const { user, isLoggedIn, isLoading: authLoading } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [warningSigns, setWarningSigns] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -61,13 +62,17 @@ const AddWarningScreen = ({ navigation }) => {
       return;
     }
 
-    // Basic validation
-    if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
+    // Basic validation matching backend requirements
+    if (!title.trim() || title.trim().length < 5) {
+      Alert.alert('Error', 'Title must be at least 5 characters');
       return;
     }
-    if (!description.trim()) {
-      Alert.alert('Error', 'Please enter a description');
+    if (!description.trim() || description.trim().length < 20) {
+      Alert.alert('Error', 'Description must be at least 20 characters');
+      return;
+    }
+    if (!warningSigns.trim() || warningSigns.trim().length < 10) {
+      Alert.alert('Error', 'Warning signs must be at least 10 characters');
       return;
     }
     if (!selectedCategory) {
@@ -80,6 +85,7 @@ const AddWarningScreen = ({ navigation }) => {
     const result = await warningsAPI.create(
       title.trim(),
       description.trim(),
+      warningSigns.trim(),
       selectedCategory,
       user.id // Pass userId from context
     );
@@ -97,6 +103,7 @@ const AddWarningScreen = ({ navigation }) => {
               // Clear form
               setTitle('');
               setDescription('');
+              setWarningSigns('');
               setSelectedCategory(null);
               
               // Navigate back to home
@@ -210,6 +217,23 @@ const AddWarningScreen = ({ navigation }) => {
               editable={!loading}
             />
             <Text style={styles.charCount}>{description.length}/500</Text>
+          </View>
+
+          {/* Warning Signs Field */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Warning Signs *</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="List the warning signs to look out for (e.g., urgent demands, suspicious links, requests for personal info)..."
+              value={warningSigns}
+              onChangeText={setWarningSigns}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              maxLength={1000}
+              editable={!loading}
+            />
+            <Text style={styles.charCount}>{warningSigns.length}/1000</Text>
           </View>
 
           {/* Category Selection */}

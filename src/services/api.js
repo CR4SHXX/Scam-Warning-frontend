@@ -97,19 +97,34 @@ export const warningsAPI = {
   },
 
   // Create new warning (userId passed in body for simplified backend without JWT)
-  create: async (title, description, categoryId, userId) => {
+  create: async (title, description, warningSigns, categoryId, userId) => {
     try {
+      console.log('Creating warning with:', { title, description, warningSigns, categoryId, userId });
       const response = await apiClient.post('/warnings', {
         title,
         description,
+        warningSigns, // Required by backend
         categoryId,
         userId, // Include userId in body since no JWT
       });
       return { success: true, data: response.data };
     } catch (error) {
+      console.log('Error response:', error.response?.data);
+      // Handle validation errors from backend
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to create warning';
+      if (errorData?.errors) {
+        // Extract validation error messages
+        const messages = Object.values(errorData.errors).flat();
+        errorMessage = messages.join(', ');
+      } else if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Failed to create warning',
+        error: errorMessage,
       };
     }
   },
@@ -150,7 +165,7 @@ export const commentsAPI = {
   add: async (warningId, content, userId) => {
     try {
       const response = await apiClient.post(`/warnings/${warningId}/comments`, {
-        content,
+        text: content, // Backend expects 'text' not 'content'
         userId, // Include userId in body since no JWT
       });
       return { success: true, data: response.data };
