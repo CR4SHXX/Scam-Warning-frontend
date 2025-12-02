@@ -13,9 +13,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { warningsAPI, commentsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const WarningDetailScreen = ({ route, navigation }) => {
   const { warningId } = route.params;
+  const { user, isLoggedIn } = useAuth();
   
   // State for API data
   const [warning, setWarning] = useState(null);
@@ -27,7 +29,6 @@ const WarningDetailScreen = ({ route, navigation }) => {
   // State for comment form
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [username, setUsername] = useState('');
 
   // Fetch data on mount
   useEffect(() => {
@@ -62,11 +63,14 @@ const WarningDetailScreen = ({ route, navigation }) => {
 
   // Handle comment submission
   const handleSubmitComment = async () => {
-    // Validation
-    if (!username.trim()) {
-      Alert.alert('Error', 'Please enter your name');
+    // Check if user is logged in
+    if (!isLoggedIn || !user) {
+      Alert.alert('Error', 'Please login to add a comment');
+      navigation.navigate('Auth');
       return;
     }
+
+    // Validation
     if (!commentText.trim()) {
       Alert.alert('Error', 'Please enter a comment');
       return;
@@ -74,7 +78,7 @@ const WarningDetailScreen = ({ route, navigation }) => {
 
     setSubmitting(true);
     
-    const result = await commentsAPI.add(warningId, commentText.trim());
+    const result = await commentsAPI.add(warningId, commentText.trim(), user.id);
     
     setSubmitting(false);
     
@@ -88,7 +92,6 @@ const WarningDetailScreen = ({ route, navigation }) => {
             onPress: () => {
               // Clear form and hide it
               setCommentText('');
-              setUsername('');
               setShowCommentForm(false);
               // Refresh data
               fetchWarningAndComments();
@@ -104,7 +107,6 @@ const WarningDetailScreen = ({ route, navigation }) => {
   // Handle cancel
   const handleCancelComment = () => {
     setCommentText('');
-    setUsername('');
     setShowCommentForm(false);
   };
 
@@ -189,7 +191,16 @@ const WarningDetailScreen = ({ route, navigation }) => {
         {!showCommentForm ? (
           <TouchableOpacity 
             style={styles.addCommentButton}
-            onPress={() => setShowCommentForm(true)}
+            onPress={() => {
+              if (!isLoggedIn) {
+                Alert.alert('Login Required', 'Please login to add a comment', [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Login', onPress: () => navigation.navigate('Auth') }
+                ]);
+              } else {
+                setShowCommentForm(true);
+              }
+            }}
           >
             <Text style={styles.addCommentButtonText}>💬 Add Your Comment</Text>
           </TouchableOpacity>
@@ -197,19 +208,7 @@ const WarningDetailScreen = ({ route, navigation }) => {
           /* Comment Form */
           <View style={styles.commentFormContainer}>
             <Text style={styles.formTitle}>Add Your Comment</Text>
-            
-            {/* Username Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Your Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your name"
-                value={username}
-                onChangeText={setUsername}
-                maxLength={50}
-                editable={!submitting}
-              />
-            </View>
+            <Text style={styles.commentingAs}>Commenting as: {user?.username || 'Unknown'}</Text>
 
             {/* Comment Input */}
             <View style={styles.inputContainer}>
@@ -404,6 +403,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 8,
+  },
+  commentingAs: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 16,
   },
   inputContainer: {

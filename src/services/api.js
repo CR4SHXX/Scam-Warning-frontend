@@ -1,39 +1,18 @@
 // src/services/api.js
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CONFIG } from '../config';
 
-// API Configuration
-// Configure the base URL based on your environment:
-// - Android Emulator: http://10.0.2.2:5000/api (10.0.2.2 maps to localhost on host machine)
-// - iOS Simulator: http://localhost:5000/api
-// - Physical Device: http://YOUR_IP:5000/api (replace YOUR_IP with your computer's local IP)
-const API_BASE_URL = 'http://10.0.2.2:5000/api';
-
-// Create axios instance
+// Create axios instance - no auth headers needed with simplified backend
+// NOTE: This simplified approach passes userId in request body instead of using JWT tokens.
+// This is intended for development/school project use where the backend trusts the client.
+// For production apps, implement proper token-based authentication with server-side validation.
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: CONFIG.API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: CONFIG.API_TIMEOUT,
 });
-
-// Request interceptor to add authentication token
-apiClient.interceptors.request.use(
-  async (config) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.error('Error retrieving token:', error);
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 // Authentication API
 export const authAPI = {
@@ -61,39 +40,13 @@ export const authAPI = {
         email,
         password,
       });
-      
-      // Note: Token storage is handled by AuthContext.login()
-      // to maintain a single source of truth for auth state
-      
+      // Backend returns user info: { id, username, email }
       return { success: true, data: response.data };
     } catch (error) {
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Login failed',
       };
-    }
-  },
-
-  // Logout user
-  logout: async () => {
-    try {
-      await AsyncStorage.removeItem('authToken');
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Logout failed',
-      };
-    }
-  },
-
-  // Check if user is logged in
-  isLoggedIn: async () => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      return { success: true, data: !!token };
-    } catch (error) {
-      return { success: false, data: false };
     }
   },
 };
@@ -143,14 +96,14 @@ export const warningsAPI = {
     }
   },
 
-  // Create new warning (requires authentication)
-  create: async (title, description, categoryId, warningSigns) => {
+  // Create new warning (userId passed in body for simplified backend without JWT)
+  create: async (title, description, categoryId, userId) => {
     try {
       const response = await apiClient.post('/warnings', {
         title,
         description,
         categoryId,
-        warningSigns,
+        userId, // Include userId in body since no JWT
       });
       return { success: true, data: response.data };
     } catch (error) {
@@ -193,11 +146,12 @@ export const commentsAPI = {
     }
   },
 
-  // Add comment to a warning (requires authentication)
-  add: async (warningId, text) => {
+  // Add comment to a warning (userId passed in body for simplified backend without JWT)
+  add: async (warningId, content, userId) => {
     try {
       const response = await apiClient.post(`/warnings/${warningId}/comments`, {
-        text,
+        content,
+        userId, // Include userId in body since no JWT
       });
       return { success: true, data: response.data };
     } catch (error) {
