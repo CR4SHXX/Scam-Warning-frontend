@@ -10,7 +10,7 @@ export default function WarningCard({ warning, onPress }) {
     >
       {/* Category Badge */}
       <View style={styles.categoryBadge}>
-        <Text style={styles.categoryText}>{warning.category}</Text>
+        <Text style={styles.categoryText}>{warning.categoryEmoji || '⚠️'} {warning.category || warning.categoryName}</Text>
       </View>
       
       {/* Title */}

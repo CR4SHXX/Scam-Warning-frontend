@@ -10,7 +10,7 @@ const AuthContext = createContext();
 
 // AuthProvider component that wraps the app
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // { id, username, email }
+  const [user, setUser] = useState(null); // { id, username, email, isAdmin }
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user info is stored on app start
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   };
 
-  // Login function - stores user info
+  // Login function - stores user info (including isAdmin)
   const login = async (userData) => {
     try {
       setUser(userData);
@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     isLoggedIn: !!user,
+    isAdmin: user?.isAdmin || false,
     isLoading,
     login,
     logout,

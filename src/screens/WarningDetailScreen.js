@@ -12,12 +12,12 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { warningsAPI, commentsAPI } from '../services/api';
+import { warningsAPI, commentsAPI, adminAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const WarningDetailScreen = ({ route, navigation }) => {
   const { warningId } = route.params;
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, isAdmin } = useAuth();
   
   // State for API data
   const [warning, setWarning] = useState(null);
@@ -109,6 +109,30 @@ const WarningDetailScreen = ({ route, navigation }) => {
     }
   };
 
+  // Handle delete comment (admin only)
+  const handleDeleteComment = (commentId) => {
+    Alert.alert(
+      'Delete Comment',
+      'Are you sure you want to delete this comment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await adminAPI.deleteComment(commentId, user.id);
+            if (result.success) {
+              Alert.alert('Success', 'Comment deleted');
+              fetchWarningAndComments();
+            } else {
+              Alert.alert('Error', result.error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Handle cancel
   const handleCancelComment = () => {
     setCommentText('');
@@ -142,7 +166,7 @@ const WarningDetailScreen = ({ route, navigation }) => {
       <ScrollView style={styles.container}>
         {/* Category Badge */}
         <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>{warning.category}</Text>
+          <Text style={styles.categoryText}>{warning.categoryEmoji || '⚠️'} {warning.categoryName || warning.category}</Text>
         </View>
 
         {/* Title */}
@@ -185,7 +209,17 @@ const WarningDetailScreen = ({ route, navigation }) => {
             <View key={comment.id} style={styles.commentItem}>
               <View style={styles.commentHeader}>
                 <Text style={styles.commentUsername}>{comment.username}</Text>
-                <Text style={styles.commentTimestamp}>{new Date(comment.createdAt).toLocaleDateString()}</Text>
+                <View style={styles.commentHeaderRight}>
+                  <Text style={styles.commentTimestamp}>{new Date(comment.createdAt).toLocaleDateString()}</Text>
+                  {isAdmin && (
+                    <TouchableOpacity
+                      style={styles.deleteCommentBtn}
+                      onPress={() => handleDeleteComment(comment.id)}
+                    >
+                      <Text style={styles.deleteCommentText}>🗑️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <Text style={styles.commentText}>{comment.text}</Text>
             </View>
@@ -366,9 +400,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
+  commentHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   commentTimestamp: {
     fontSize: 12,
     color: '#999',
+  },
+  deleteCommentBtn: {
+    padding: 4,
+  },
+  deleteCommentText: {
+    fontSize: 16,
   },
   commentText: {
     fontSize: 14,

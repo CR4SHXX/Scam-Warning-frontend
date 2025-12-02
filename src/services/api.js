@@ -177,3 +177,97 @@ export const commentsAPI = {
     }
   },
 };
+
+// Admin API
+export const adminAPI = {
+  // Verify if user is admin
+  verifyAdmin: async (userId) => {
+    try {
+      const response = await apiClient.get(`/admin/verify/${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to verify admin',
+      };
+    }
+  },
+
+  // Get all warnings (admin only)
+  getAllWarnings: async (userId) => {
+    try {
+      const response = await apiClient.get(`/admin/warnings?userId=${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to fetch warnings',
+      };
+    }
+  },
+
+  // Delete a warning (admin only)
+  deleteWarning: async (warningId, userId) => {
+    try {
+      const response = await apiClient.delete(`/admin/warnings/${warningId}?userId=${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to delete warning',
+      };
+    }
+  },
+
+  // Update a warning (admin only)
+  updateWarning: async (warningId, warningData, userId) => {
+    try {
+      const response = await apiClient.put(`/admin/warnings/${warningId}?userId=${userId}`, warningData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to update warning',
+      };
+    }
+  },
+
+  // Delete a comment (admin only)
+  deleteComment: async (commentId, userId) => {
+    try {
+      const response = await apiClient.delete(`/admin/comments/${commentId}?userId=${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to delete comment',
+      };
+    }
+  },
+
+  // Approve a warning (admin only)
+  approveWarning: async (warningId, userId) => {
+    try {
+      const response = await apiClient.put(`/admin/warnings/${warningId}/approve?userId=${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to approve warning',
+      };
+    }
+  },
+
+  // Reject a warning (admin only)
+  rejectWarning: async (warningId, userId) => {
+    try {
+      const response = await apiClient.put(`/admin/warnings/${warningId}/reject?userId=${userId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to reject warning',
+      };
+    }
+  },
+};

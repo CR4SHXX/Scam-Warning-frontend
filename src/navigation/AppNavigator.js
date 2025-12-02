@@ -5,6 +5,7 @@ import AllWarningsScreen from '../screens/AllWarningsScreen';
 import WarningDetailScreen from '../screens/WarningDetailScreen';
 import AuthScreen from '../screens/AuthScreen';
 import AddWarningScreen from '../screens/AddWarningScreen';
+import AdminScreen from '../screens/AdminScreen';
 
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ export default function AppNavigator() {
       <Stack.Screen name="WarningDetail" component={WarningDetailScreen} />
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="AddWarning" component={AddWarningScreen} />
+      <Stack.Screen name="Admin" component={AdminScreen} />
     </Stack.Navigator>
   );
 }

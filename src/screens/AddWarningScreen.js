@@ -71,8 +71,8 @@ const AddWarningScreen = ({ navigation }) => {
       Alert.alert('Error', 'Description must be at least 20 characters');
       return;
     }
-    if (!warningSigns.trim() || warningSigns.trim().length < 10) {
-      Alert.alert('Error', 'Warning signs must be at least 10 characters');
+    if (!warningSigns.trim() || warningSigns.trim().length < 5) {
+      Alert.alert('Error', 'Warning signs must be at least 5 characters');
       return;
     }
     if (!selectedCategory) {

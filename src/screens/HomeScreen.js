@@ -5,7 +5,7 @@ import { warningsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function HomeScreen({ navigation }) {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, isAdmin, logout } = useAuth();
   
   // State for API data
   const [warnings, setWarnings] = useState([]);
@@ -127,12 +127,22 @@ export default function HomeScreen({ navigation }) {
       {/* BOTTOM BUTTONS */}
       <View style={styles.buttonContainer}>
         {isLoggedIn ? (
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.loggedInButtons}>
+            {isAdmin && (
+              <TouchableOpacity 
+                style={styles.adminButton}
+                onPress={() => navigation.navigate('Admin')}
+              >
+                <Text style={styles.adminButtonText}>🛡️ Admin Panel</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <TouchableOpacity 
@@ -266,6 +276,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loggedInButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  adminButton: {
+    flex: 1,
+    backgroundColor: '#5856D6',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  adminButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
