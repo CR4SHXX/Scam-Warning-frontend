@@ -16,10 +16,9 @@ import { warningsAPI, categoriesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const AddWarningScreen = ({ navigation }) => {
-  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const { user, isLoggedIn, isLoading: authLoading } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [warningSigns, setWarningSigns] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +54,13 @@ const AddWarningScreen = ({ navigation }) => {
   };
 
   const handleSubmit = async () => {
+    // Check if user is logged in
+    if (!isLoggedIn || !user) {
+      Alert.alert('Error', 'Please login first');
+      navigation.navigate('Auth');
+      return;
+    }
+
     // Basic validation
     if (!title.trim()) {
       Alert.alert('Error', 'Please enter a title');
@@ -69,19 +75,13 @@ const AddWarningScreen = ({ navigation }) => {
       return;
     }
 
-    // Parse warning signs (split by newlines or commas)
-    const warningSignsArray = warningSigns
-      .split(/[\n,]+/)
-      .map(sign => sign.trim())
-      .filter(sign => sign.length > 0);
-
     setLoading(true);
     
     const result = await warningsAPI.create(
       title.trim(),
       description.trim(),
       selectedCategory,
-      warningSignsArray
+      user.id // Pass userId from context
     );
     
     setLoading(false);
@@ -97,7 +97,6 @@ const AddWarningScreen = ({ navigation }) => {
               // Clear form
               setTitle('');
               setDescription('');
-              setWarningSigns('');
               setSelectedCategory(null);
               
               // Navigate back to home
@@ -238,26 +237,6 @@ const AddWarningScreen = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-
-          {/* Warning Signs Field */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Warning Signs (Optional)</Text>
-            <Text style={styles.fieldHint}>
-              Enter each warning sign on a new line or separate with commas
-            </Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="e.g.,&#10;Caller demands immediate payment&#10;Threats of arrest or legal action&#10;Request for gift cards"
-              value={warningSigns}
-              onChangeText={setWarningSigns}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-              maxLength={300}
-              editable={!loading}
-            />
-            <Text style={styles.charCount}>{warningSigns.length}/300</Text>
           </View>
 
           {/* Info Box */}

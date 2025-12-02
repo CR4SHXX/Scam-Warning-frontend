@@ -7,79 +7,55 @@ const AuthContext = createContext();
 
 // AuthProvider component that wraps the app
 export const AuthProvider = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // { id, username, email }
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is authenticated on app start
+  // Check if user info is stored on app start
   useEffect(() => {
-    checkAuth();
+    loadUser();
   }, []);
 
-  // Check if token exists in AsyncStorage
-  const checkAuth = async () => {
+  // Load user from AsyncStorage
+  const loadUser = async () => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      const userData = await AsyncStorage.getItem('userData');
-      
-      if (token) {
-        setIsLoggedIn(true);
-        if (userData) {
-          try {
-            setUser(JSON.parse(userData));
-          } catch (parseError) {
-            console.error('Error parsing user data:', parseError);
-            setUser(null);
-          }
-        }
-      } else {
-        setIsLoggedIn(false);
-        setUser(null);
+      const userJson = await AsyncStorage.getItem('user');
+      if (userJson) {
+        setUser(JSON.parse(userJson));
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
-      setIsLoggedIn(false);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading user:', error);
     }
+    setIsLoading(false);
   };
 
-  // Login function - stores token and updates state
-  const login = async (token, userData = null) => {
+  // Login function - stores user info
+  const login = async (userData) => {
     try {
-      await AsyncStorage.setItem('authToken', token);
-      if (userData) {
-        await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        setUser(userData);
-      }
-      setIsLoggedIn(true);
+      setUser(userData);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Error storing auth data:', error);
+      console.error('Error storing user data:', error);
       throw error;
     }
   };
 
-  // Logout function - clears token and updates state
+  // Logout function - clears user info
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userData');
-      setIsLoggedIn(false);
       setUser(null);
+      await AsyncStorage.removeItem('user');
     } catch (error) {
-      console.error('Error clearing auth data:', error);
+      console.error('Error clearing user data:', error);
       throw error;
     }
   };
 
   const value = {
-    isLoggedIn,
     user,
+    isLoggedIn: !!user,
     isLoading,
     login,
     logout,
-    checkAuth,
   };
 
   return (
