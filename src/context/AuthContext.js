@@ -1,4 +1,7 @@
 // src/context/AuthContext.js
+// NOTE: This simplified auth context stores user info locally without server-side session validation.
+// This is intended for development/school project use. For production apps, implement proper
+// token-based authentication with server-side validation.
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

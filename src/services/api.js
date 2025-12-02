@@ -3,6 +3,9 @@ import axios from 'axios';
 import { CONFIG } from '../config';
 
 // Create axios instance - no auth headers needed with simplified backend
+// NOTE: This simplified approach passes userId in request body instead of using JWT tokens.
+// This is intended for development/school project use where the backend trusts the client.
+// For production apps, implement proper token-based authentication with server-side validation.
 const apiClient = axios.create({
   baseURL: CONFIG.API_BASE_URL,
   headers: {
@@ -93,7 +96,7 @@ export const warningsAPI = {
     }
   },
 
-  // Create new warning (requires userId to be passed)
+  // Create new warning (userId passed in body for simplified backend without JWT)
   create: async (title, description, categoryId, userId) => {
     try {
       const response = await apiClient.post('/warnings', {
@@ -143,7 +146,7 @@ export const commentsAPI = {
     }
   },
 
-  // Add comment to a warning (requires userId to be passed)
+  // Add comment to a warning (userId passed in body for simplified backend without JWT)
   add: async (warningId, content, userId) => {
     try {
       const response = await apiClient.post(`/warnings/${warningId}/comments`, {
